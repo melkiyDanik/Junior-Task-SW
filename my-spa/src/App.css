@@ -1,0 +1,73 @@
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+
+.product-card {
+  position: relative !important; 
+  padding: 16px;
+  transition: all 0.3s ease-in-out;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.product-card:hover {
+  box-shadow: 0px 4px 35px rgba(168, 172, 176, 0.19);
+}
+
+
+.quick-add-btn {
+  
+  opacity: 0 !important;
+  visibility: hidden !important;
+  
+
+  position: absolute !important;
+  right: 31px !important;
+  bottom: 72px !important;
+  
+  
+  width: 52px !important;
+  height: 52px !important;
+  background-color: #5ECE7B !important;
+  border-radius: 50% !important;
+  
+  
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  box-shadow: 0px 4px 11px rgba(29, 31, 34, 0.1) !important;
+  transition: all 0.3s ease-in-out !important;
+  z-index: 99 !important; 
+  cursor: pointer !important;   
+}
+
+
+.product-card:hover .quick-add-btn {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+
+.quick-add-btn:hover {
+  transform: scale(1.1) !important;
+  background-color: #4db369 !important;
+}
+
+
+.badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: black;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+}
