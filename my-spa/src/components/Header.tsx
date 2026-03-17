@@ -1,24 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+// 1. ИМПОРТИРУЕМ ИНСТРУМЕНТЫ ДЛЯ МУТАЦИИ
+import { useMutation } from '@apollo/client/react/index.js';
+import { CREATE_ORDER } from '../graphql/queries'; 
 
 const Header = () => {
-  const { totalItems, cartItems, totalPrice, updateQuantity, clearCart, updateCartItemAttributes } = useCart();
+  const { totalItems, cartItems, totalPrice, updateQuantity, clearCart } = useCart();
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const location = useLocation();
 
-  // --- НОВАЯ ЛОГИКА ДЛЯ АВТОМАТИЧЕСКОГО ОТКРЫТИЯ КОРЗИНЫ ---
+  // 2. ПОДКЛЮЧАЕМ МУТАЦИЮ
+  const [createOrder] = useMutation(CREATE_ORDER);
+
   const prevTotalItems = useRef(totalItems);
 
   useEffect(() => {
-    // Если товаров стало больше, чем было (то есть мы добавили новый), открываем оверлей
     if (totalItems > prevTotalItems.current) {
       setIsOverlayOpen(true);
+      // ДОБАВЛЯЕМ ЭТУ СТРОЧКУ: Плавный скролл в самый верх страницы
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
     }
-    // Запоминаем текущее количество для следующей проверки
     prevTotalItems.current = totalItems;
   }, [totalItems]);
-  // --------------------------------------------------------
 
   const categories = ['all', 'clothes', 'tech'];
 
@@ -27,16 +31,42 @@ const Header = () => {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOverlayOpen]);
 
-  const handlePlaceOrder = () => {
+  // 3. ПЕРЕПИСЫВАЕМ ФУНКЦИЮ ОТПРАВКИ ЗАКАЗА
+  const handlePlaceOrder = async () => {
     if (cartItems.length === 0) return;
-    clearCart();
-    setIsOverlayOpen(false);
-    alert('Order placed successfully!');
+    
+    try {
+      const orderItems = cartItems.map(item => {
+        return {
+          productId: item.id, // Если в консоли тут будет undefined, значит id хранится в другом поле!
+          quantity: item.quantity,
+          attributes: Object.keys(item.selectedAttributes || {}).map(key => ({
+            id: key,
+            value: item.selectedAttributes[key]
+          }))
+        };
+      });
+
+      console.log("Отправляем на сервер вот эти данные:", orderItems); // <--- ПРОВЕРКА В КОНСОЛИ
+
+      // Ждем ответ от сервера
+      const response = await createOrder({ 
+        variables: { items: orderItems } 
+      });
+
+      clearCart();
+      setIsOverlayOpen(false);
+      // Выводим сообщение, которое прислал сам PHP!
+      alert('Ответ от сервера: ' + (response.data as any).createOrder.message);
+      
+    } catch (error) {
+      console.error("Ошибка при отправке заказа:", error);
+      alert('Failed to place order. Check console!');
+    }
   };
 
   return (
-    <header className="header" style={{ height: '80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 100px', position: 'relative', backgroundColor: '#fff', zIndex: 1000 }}>
-      <nav style={{ display: 'flex', gap: '30px', height: '100%', alignItems: 'center' }}>
+<header className="header" style={{ height: '80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 100px', position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1000 }}>      <nav style={{ display: 'flex', gap: '30px', height: '100%', alignItems: 'center', pointerEvents: isOverlayOpen ? 'none' : 'auto' }}>
         {categories.map((cat) => {
           const isActive = location.pathname === `/${cat}` || (cat === 'all' && (location.pathname === '/' || location.pathname === '/all'));
           
@@ -61,7 +91,7 @@ const Header = () => {
         })}
       </nav>
 
-      <Link to="/" style={{ display: 'flex' }}>
+      <Link to="/" style={{ display: 'flex', pointerEvents: isOverlayOpen ? 'none' : 'auto' }}>
         <img src="/src/assets/logo.png" alt="logo" style={{ width: '60px' }}/>
       </Link>
 
@@ -113,7 +143,6 @@ const Header = () => {
                                   <div
                                     key={opt.id}
                                     data-testid={`cart-item-attribute-${testName}-${itemTestValSafe}`}
-                                    onClick={() => updateCartItemAttributes(item.cartId, attr.id, opt.id)}
                                     style={{
                                       width: isColor ? '20px' : 'auto', 
                                       height: '20px', 
@@ -122,7 +151,7 @@ const Header = () => {
                                       backgroundColor: isColor ? opt.value : (isSelected ? '#1D1F22' : 'white'),
                                       color: isSelected && !isColor ? 'white' : 'black',
                                       fontSize: '8px', 
-                                      cursor: 'pointer', 
+                                      cursor: 'default', 
                                       display: 'flex', 
                                       alignItems: 'center', 
                                       justifyContent: 'center'

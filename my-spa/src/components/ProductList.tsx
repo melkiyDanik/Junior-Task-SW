@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client/react/index.js';
 import { Link, useParams } from 'react-router-dom';
 import { GET_PRODUCTS } from '../graphql/queries';
 import { useCart } from '../context/CartContext';
-import '../App.css'; // <--- ОБЯЗАТЕЛЬНО ПРОВЕРЬ ЭТОТ ИМПОРТ
+import '../App.css'; 
 
 // Интерфейсы данных
 interface Product {
@@ -30,7 +30,7 @@ const ProductList = () => {
   const filteredProducts = products.filter(p => activeCategory === 'all' || p.category === activeCategory);
 
   const handleQuickAdd = (e: React.MouseEvent, product: Product) => {
-    e.preventDefault();
+    e.preventDefault(); 
     e.stopPropagation();
     const attrs: Record<string, string> = {};
     product.attributes.forEach(a => { if (a.items.length > 0) attrs[a.id] = a.items[0].id; });
@@ -45,52 +45,74 @@ const ProductList = () => {
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px 100px' }}>
         {filteredProducts.map((product) => (
-          /* Контейнер карточки с нужным классом */
-          <div key={product.id} className="product-card"> 
+          <div 
+            key={product.id} 
+            className="product-card" 
+            style={{ padding: '16px', transition: 'box-shadow 0.3s ease' }}
+          > 
             <Link 
               to={`/product/${product.id}`} 
               style={{ textDecoration: 'none', color: 'inherit', opacity: product.inStock ? 1 : 0.5, display: 'block' }}
-              // Тест ищет этот ID (например: product-playstation-5)
               data-testid={`product-${product.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
+              {/* --- КОНТЕЙНЕР ДЛЯ КАРТИНКИ --- */}
               <div style={{ position: 'relative', height: '330px', marginBottom: '24px' }}>
+                
                 {!product.inStock && (
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.5)', zIndex: 2 }}>
                     <span style={{ fontSize: '24px', color: '#8D8F9A', textTransform: 'uppercase' }}>Out of stock</span>
                   </div>
                 )}
+                
                 <img src={product.gallery[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-              </div>
 
-              <div style={{ marginTop: '24px', textAlign: 'left' }}>
+                {/* --- КНОПКА КОРЗИНЫ (Снова внутри картинки) --- */}
+                {product.inStock && (
+                  <div 
+                    className="quick-add-btn"
+                    data-testid="quick-add-btn"
+                    onClick={(e) => handleQuickAdd(e, product)}
+                    style={{
+                      position: 'absolute',
+                      right: '15px',
+                      top: '260px', 
+                      // Идеальное положение: ровно на границе картинки и отступа
+                      bottom: '10px', 
+                      zIndex: 10,
+                      backgroundColor: '#5ECE7B',
+                      borderRadius: '50%',
+                      width: '52px',
+                      height: '52px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 11px rgba(29, 31, 34, 0.1)',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease'
+                    }}
+                  >
+                     <img 
+                       src="/src/assets/cart-icon-14.png" 
+                       alt="Add to cart" 
+                       style={{ width: '24px', filter: 'brightness(0) invert(1)' }} 
+                     />
+                  </div>
+                )}
+              </div>
+              {/* ------------------------------------------------------ */}
+
+              {/* --- ТЕКСТОВАЯ ИНФОРМАЦИЯ --- */}
+              <div style={{ textAlign: 'left' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 300, marginBottom: '8px', display: 'flex', gap: '4px' }}>
-                  {/* РАЗДЕЛИЛИ BRAND И NAME ДЛЯ ТЕСТОВ */}
                   <span>{product.brand}</span>
                   <span>{product.name}</span>
                 </h2>
                 <p style={{ fontSize: '18px', fontWeight: 500 }}>
-                  {/* РАЗДЕЛИЛИ ВАЛЮТУ И СУММУ НА ВСЯКИЙ СЛУЧАЙ */}
                   <span>{product.prices[0]?.currency_symbol}</span>
                   <span>{product.prices[0]?.amount.toFixed(2)}</span>
                 </p>
               </div>
             </Link>
-
-            {/* Кнопка с классом quick-add-btn */}
-            {product.inStock && (
-              <div 
-                className="quick-add-btn"
-                data-testid="quick-add-btn"
-                onClick={(e) => handleQuickAdd(e, product)}
-              >
-                 <img 
-                   src="/src/assets/cart-icon-14.png" 
-                   alt="Add to cart" 
-                   /* Фильтр делает черную иконку белой */
-                   style={{ width: '24px', filter: 'brightness(0) invert(1)' }} 
-                 />
-              </div>
-            )}
           </div>
         ))}
       </div>

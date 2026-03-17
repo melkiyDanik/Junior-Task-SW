@@ -56,3 +56,12 @@ export const GET_PRODUCT_DETAILS = gql`
     }
   }
 `;
+
+export const CREATE_ORDER = gql`
+  mutation CreateOrder($items: [OrderItemInput!]!) {
+    createOrder(items: $items) {
+      id
+      message 
+    }
+  }
+`;
